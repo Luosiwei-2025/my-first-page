@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医学影像检查速查卡</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 16px 64px;
+    font-family: "Microsoft YaHei", system-ui, sans-serif;
+    background: #f4f5f7;
+    color: #23272f;
+    line-height: 1.7;
+  }
+  h1 { font-size: 21px; margin: 0 0 8px; text-align: center; }
+  .hint { text-align: center; color: #8b91a0; font-size: 13px; margin: 0 0 26px; }
+  .list { max-width: 560px; margin: 0 auto; }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid #e3e5ea;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    padding: 15px 18px 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .name { font-size: 16px; font-weight: 500; }
+  .en { font-size: 11px; color: #a0a6b3; margin-left: 6px; letter-spacing: .3px; }
+  .arrow {
+    margin-left: auto;
+    color: #185fa5;
+    font-size: 11px;
+    transition: transform .22s ease;
+  }
+  .card.open .arrow { transform: rotate(180deg); }
+
+  .brief { padding: 0 18px 15px; font-size: 13px; color: #6b7280; }
+
+  .body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .28s ease;
+    border-top: 1px dashed #eceef2;
+  }
+  .card.open .body { max-height: 760px; }
+
+  .body-in { padding: 14px 18px 18px; }
+  .row { display: flex; gap: 10px; margin-bottom: 11px; font-size: 14px; }
+  .row:last-child { margin-bottom: 0; }
+  .label {
+    flex: none;
+    width: 60px;
+    font-size: 12px;
+    color: #185fa5;
+    background: #e6f1fb;
+    border-radius: 5px;
+    padding: 2px 0;
+    text-align: center;
+    align-self: flex-start;
+    margin-top: 3px;
+  }
+  .label.warn { color: #a32d2d; background: #fcebeb; }
+  .text { flex: 1; color: #3d4351; }
+</style>
+</head>
+<body>
+
+  <h1>医学影像检查速查卡</h1>
+  <p class="hint">点一下卡片，展开详情</p>
+
+  <div class="list">
+
+    <div class="card">
+      <div class="head">
+        <span class="name">X 线平片</span>
+        <span class="en">X-ray</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="brief">射线穿过人体，骨头挡得多所以显得白</div>
+      <div class="body">
+        <div class="body-in">
+          <div class="row"><span class="label">常用</span><span class="text">崴了脚踝这一块</span></div>
+          <div class="row"><span class="label">优点</span><span class="text">快、便宜、辐射剂量低</span></div>
+          <div class="row"><span class="label warn">注意</span><span class="text">是平面重叠影像，小病灶容易漏；育龄女性检查前须告知医生</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <span class="name">CT</span>
+        <span class="en">计算机断层扫描</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="brief">射线绕着人转一圈，计算机切成一层层来看</div>
+      <div class="body">
+        <div class="body-in">
+          <div class="row"><span class="label">常用</span><span class="text">脑出血、肺结节、腹部外伤、肿瘤分期</span></div>
+          <div class="row"><span class="label">优点</span><span class="text">分辨率高，急诊首选，能看到横断面</span></div>
+          <div class="row"><span class="label warn">注意</span><span class="text">辐射明显高于 X 线；增强 CT 用碘造影剂，须先查肾功能、问过敏史</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <span class="name">MRI</span>
+        <span class="en">磁共振成像</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="brief">强磁场让体内水分子共振，完全不用射线</div>
+      <div class="body">
+        <div class="body-in">
+          <div class="row"><span class="label">常用</span><span class="text">脑、脊髓、关节韧带、盆腔</span></div>
+          <div class="row"><span class="label">优点</span><span class="text">软组织看得最清楚，无电离辐射</span></div>
+          <div class="row"><span class="label warn">注意</span><span class="text">体内有金属植入物、心脏起搏器者不能做；检查慢、有噪音</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <span class="name">超声</span>
+        <span class="en">B 超</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="brief">高频声波打进去，反射回来拼成图像</div>
+      <div class="body">
+        <div class="body-in">
+          <div class="row"><span class="label">常用</span><span class="text">腹部脏器、心脏、血管、产科、穿刺引导</span></div>
+          <div class="row"><span class="label">优点</span><span class="text">实时动态、无辐射、可推到床边做</span></div>
+          <div class="row"><span class="label warn">注意</span><span class="text">气体和骨骼会挡住声波，肺和肠气多的部位看不清</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <span class="name">血管造影</span>
+        <span class="en">DSA</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="brief">打入造影剂，把血管单独"抠"出来看</div>
+      <div class="body">
+        <div class="body-in">
+          <div class="row"><span class="label">常用</span><span class="text">冠心病、脑血管狭窄、出血部位栓塞止血</span></div>
+          <div class="row"><span class="label">优点</span><span class="text">血管病变的诊断金标准，可同时做介入治疗</span></div>
+          <div class="row"><span class="label warn">注意</span><span class="text">有创操作；造影剂过敏、肾功能不全者慎用</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // 找出页面上所有的卡片
+  var cards = document.querySelectorAll('.card');
+
+  // 给每一张卡片的"头部"装一个点击反应
+  cards.forEach(function (card) {
+    card.querySelector('.head').addEventListener('click', function () {
+      // open 这个名字是我们自己起的，加上它卡片就展开，去掉就收起
+      card.classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>
