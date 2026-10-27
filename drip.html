@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>输液滴速计算器</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 48px;
+    background: #f4f7f7;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #1f2d2b;
+    display: flex;
+    justify-content: center;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 26px 22px 22px;
+    box-shadow: 0 2px 12px rgba(15, 60, 55, 0.07);
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; color: #0f5148; }
+  .sub { font-size: 13px; color: #7c918d; margin: 0 0 22px; line-height: 1.5; }
+  label { display: block; font-size: 13px; color: #5c7370; margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 17px;
+    border: 1px solid #d8e3e1;
+    border-radius: 10px;
+    background: #fbfdfd;
+    color: #1f2d2b;
+    outline: none;
+    font-family: inherit;
+  }
+  input:focus, select:focus { border-color: #2a9d8f; background: #fff; }
+  .row { display: flex; gap: 10px; }
+  .row .field { flex: 1; margin-bottom: 16px; }
+  .result {
+    margin-top: 6px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    background: #f0f9f7;
+    text-align: center;
+  }
+  .num { font-size: 46px; font-weight: 700; color: #0f766e; line-height: 1.1; }
+  .unit { font-size: 15px; color: #4a7c74; margin-left: 4px; font-weight: 500; }
+  .tip { font-size: 13px; margin-top: 8px; line-height: 1.5; color: #5c7370; }
+  .warn { color: #b45309; }
+  .bad { color: #b91c1c; }
+  .foot { margin-top: 18px; font-size: 12px; color: #9aaba8; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>输液滴速计算器</h1>
+  <p class="sub">填三个数，出每分钟滴数。给的是参考值，实际以医嘱和病人反应为准。</p>
+
+  <div class="field">
+    <label>液体总量（ml）</label>
+    <input id="volume" type="number" inputmode="decimal" placeholder="例如 500" value="500">
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>小时</label>
+      <input id="hour" type="number" inputmode="numeric" placeholder="0" value="4">
+    </div>
+    <div class="field">
+      <label>分钟</label>
+      <input id="minute" type="number" inputmode="numeric" placeholder="0" value="0">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>滴系数（滴/ml）</label>
+    <select id="factor">
+      <option value="20" selected>20 — 普通输液器（成人常用）</option>
+      <option value="15">15 — 精密过滤输液器</option>
+      <option value="60">60 — 微量 / 小儿输液器</option>
+    </select>
+  </div>
+
+  <div class="result">
+    <div><span class="num" id="out">—</span><span class="unit">滴/分</span></div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <p class="foot">公式：滴速 = 总量(ml) × 滴系数 ÷ 总分钟数。算完取整数，实际调滴速看滴壶。</p>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function calculate() {
+    const volume = parseFloat($("volume").value);
+    const hour = parseFloat($("hour").value) || 0;
+    const minute = parseFloat($("minute").value) || 0;
+    const factor = parseFloat($("factor").value);
+
+    const totalMinutes = hour * 60 + minute;
+
+    if (!volume || volume <= 0 || totalMinutes <= 0) {
+      $("out").textContent = "—";
+      $("tip").textContent = "";
+      $("tip").className = "tip";
+      return;
+    }
+
+    const drops = volume * factor / totalMinutes;
+    const shown = Math.round(drops);
+
+    $("out").textContent = shown;
+    $("tip").className = "tip";
+
+    if (shown > 60) {
+      $("tip").className = "tip bad";
+      $("tip").textContent = "偏快。成人常规 40–60 滴/分，超过 60 要考虑是否医嘱有误，老人、小儿、心肺功能不全者更要慢。";
+    } else if (shown < 20) {
+      $("tip").className = "tip warn";
+      $("tip").textContent = "偏慢。低于 20 滴/分要留意是否堵管、回血，或医嘱就是要求慢滴。";
+    } else if (shown < 40) {
+      $("tip").className = "tip warn";
+      $("tip").textContent = "略低于成人常规区间（40–60 滴/分），若病人是老人或儿童属正常。";
+    } else {
+      $("tip").textContent = "在成人常规区间内（40–60 滴/分）。";
+    }
+  }
+
+  ["volume", "hour", "minute", "factor"].forEach((id) => {
+    $(id).addEventListener("input", calculate);
+  });
+
+  calculate();
+</script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一次把代码放上 GitHub · 操作卡</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #22262e;
+    --ink-2: #5b6270;
+    --ink-3: #8b91a0;
+    --line: #e3e5ea;
+    --blue: #185fa5;
+    --blue-bg: #e6f1fb;
+    --green: #0f6e56;
+    --green-bg: #e1f5ee;
+    --amber: #854f0b;
+    --amber-bg: #faeeda;
+    --red: #a32d2d;
+    --red-bg: #fcebeb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 20px 80px;
+    font-family: "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    font-size: 15px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { margin-bottom: 32px; }
+  h1 { font-size: 25px; margin: 0 0 10px; letter-spacing: -0.3px; }
+  .lead { color: var(--ink-2); margin: 0; font-size: 15px; }
+  .meta {
+    display: inline-block; margin-top: 14px; font-size: 13px;
+    color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 12px;
+  }
+
+  .stage {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 24px 26px; margin-bottom: 18px;
+    position: relative;
+  }
+  .stage-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .num {
+    flex: none; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--blue-bg); color: var(--blue);
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; top: 2px;
+  }
+  .stage h2 { font-size: 17px; margin: 0; font-weight: 500; }
+  .time { font-size: 12px; color: var(--ink-3); margin-left: auto; flex: none; }
+  .goal { color: var(--ink-2); font-size: 14px; margin: 0 0 16px 38px; }
+
+  .body-in { margin-left: 38px; }
+  .body-in > :last-child { margin-bottom: 0; }
+
+  p { margin: 0 0 12px; }
+  ol, ul { margin: 0 0 14px; padding-left: 22px; }
+  li { margin: 5px 0; }
+  strong { font-weight: 500; }
+
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: #f1f2f5; border-radius: 4px;
+    padding: 1px 5px; font-size: 13.5px; color: #3d4351;
+  }
+
+  .cmd {
+    position: relative; background: #23262e; border-radius: 9px;
+    padding: 14px 16px; margin: 0 0 14px; overflow: hidden;
+  }
+  .cmd pre {
+    margin: 0; font-family: Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.85; color: #e6e8ee;
+    white-space: pre; overflow-x: auto;
+  }
+  .cmd .cm { color: #7e879c; }
+  .copy {
+    position: absolute; top: 10px; right: 10px;
+    background: #363a45; color: #b8bec8; border: none;
+    border-radius: 6px; padding: 4px 11px; font-size: 12px;
+    cursor: pointer; font-family: inherit;
+  }
+  .copy:hover { background: #454a57; color: #fff; }
+  .copy.done { background: var(--green); color: #fff; }
+
+  .check {
+    background: var(--green-bg); border-radius: 8px;
+    padding: 11px 14px; font-size: 14px; color: var(--green);
+  }
+  .check b { font-weight: 500; }
+
+  .warn {
+    background: var(--red-bg); border-radius: 8px;
+    padding: 11px 14px; font-size: 14px; color: var(--red);
+    margin-bottom: 14px;
+  }
+  .warn b { font-weight: 500; }
+  .note {
+    background: var(--amber-bg); border-radius: 8px;
+    padding: 11px 14px; font-size: 14px; color: var(--amber);
+    margin-bottom: 14px;
+  }
+  .note b { font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 500; color: var(--ink-2); font-size: 13px; }
+  td:first-child { width: 44%; font-family: Consolas, monospace; font-size: 13px; color: var(--red); }
+  tr:last-child td { border-bottom: none; }
+
+  .final { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px 26px; }
+  .final h2 { font-size: 17px; margin: 0 0 14px; font-weight: 500; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 620px) { .two { grid-template-columns: 1fr; } .time { display: none; } }
+  .two h3 { font-size: 14px; margin: 0 0 8px; font-weight: 500; }
+  .two ul { font-size: 14px; padding-left: 18px; }
+  .ok h3 { color: var(--green); }
+  .no h3 { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>第一次把代码放上 GitHub</h1>
+    <p class="lead">照着做,全程大概 40 分钟。做完你会有一个自己的仓库,网址是 <code>github.com/你的用户名/my-first-page</code>。</p>
+    <div class="meta">练手项目已备好:C:\Users\luoha\Desktop\my-first-page</div>
+  </header>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div class="num">1</div>
+      <h2>确认 Git 装好了</h2>
+      <span class="time">1 分钟</span>
+    </div>
+    <p class="goal">Git 是装在电脑上的工具,GitHub 是网站。先要有工具,才谈得上传东西。</p>
+    <div class="body-in">
+      <p>按 <code>Win + X</code>,选「终端」或「Windows PowerShell」,把这行敲进去:</p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>git --version</pre>
+      </div>
+      <div class="check"><b>成了的样子:</b>出来一行 <code>git version 2.5x.x</code> 之类的版本号。</div>
+      <div class="note" style="margin-top:14px"><b>如果提示找不到 git:</b>说明还没装好,或者装完没重启终端。关掉窗口重开一次再试;还不行就告诉我。</div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div class="num">2</div>
+      <h2>注册 GitHub 账号</h2>
+      <span class="time">6 分钟</span>
+    </div>
+    <p class="goal">账号免费。注册好之后,你就有了一个全球公开的"门牌号"。</p>
+    <div class="body-in">
+      <ol>
+        <li>打开 <code>github.com</code>,点右上角 <strong>Sign up</strong></li>
+        <li>填邮箱、密码、用户名</li>
+        <li>邮箱里会收到验证码,填进去</li>
+      </ol>
+      <div class="warn"><b>用户名想清楚再填</b>——它会变成你的网址,以后能改但很麻烦,而且别人可能抢注。建议拼音加数字,比如 <code>luohailong-dev</code>。别用中文,别用奇怪符号。</div>
+      <div class="note"><b>给同学看的时候:</b>GitHub 上的一切默认是公开的,任何人都能搜到你。用户名建议不要用学号。</div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div class="num">3</div>
+      <h2>在网站上建一个空仓库</h2>
+      <span class="time">3 分钟</span>
+    </div>
+    <p class="goal">"仓库"就是项目文件夹的网上版本。我们先建个空的,一会儿从电脑里推上去。</p>
+    <div class="body-in">
+      <ol>
+        <li>点上方的 <strong>+</strong> → <strong>New repository</strong></li>
+        <li><strong>Repository name</strong> 填 <code>my-first-page</code>(必须和本地文件夹同名)</li>
+        <li>选 <strong>Public</strong></li>
+        <li>下面那几个勾——<strong>README、.gitignore、License 全部不要勾</strong></li>
+        <li>点绿色的 <strong>Create repository</strong></li>
+      </ol>
+      <div class="warn"><b>这一步最容易出事:</b>如果勾了「Add a README」,GitHub 会先给你造一个文件,后面推送就会打架报错。<b>保持全空</b>,页面上会显示一段命令提示,先别关这个页面。</div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div class="num">4</div>
+      <h2>把本地文件夹推上去</h2>
+      <span class="time">8 分钟</span>
+    </div>
+    <p class="goal">这是核心动作。五条命令,一条一条来,别一次全粘进去。</p>
+    <div class="body-in">
+      <p><strong>先进入项目文件夹</strong>(注意路径里的 <code>\</code> 不要改):</p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>cd C:\Users\luoha\Desktop\my-first-page</pre>
+      </div>
+
+      <p><strong>把这个文件夹变成 Git 仓库:</strong></p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>git init</pre>
+      </div>
+
+      <p><strong>告诉 Git 你是谁</strong>(只做一次,以后不用再做):</p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre><span class="cm"># 把双引号里的内容换成你自己的</span>
+git config --global user.name "你的名字"
+git config --global user.email "你的邮箱@example.com"</pre>
+      </div>
+
+      <p><strong>把这三个文件记下来,保存一次版本:</strong></p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>git add .
+git commit -m "第一次提交:我的第一个网页"</pre>
+      </div>
+
+      <p><strong>告诉本地仓库"网上那个在哪":</strong></p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre><span class="cm"># 把 YOUR-USERNAME 换成你的 GitHub 用户名</span>
+git remote add origin https://github.com/YOUR-USERNAME/my-first-page.git
+git branch -M main</pre>
+      </div>
+
+      <p><strong>推上去:</strong></p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>git push -u origin main</pre>
+      </div>
+
+      <div class="check"><b>关键一步:</b>执行 push 之后会弹出一个窗口写着「Connect to GitHub」。点 <strong>Sign in with your browser</strong>,浏览器里登录 GitHub,点绿色的 <strong>Authorize</strong>。授权完回到终端,进度条走完就成了。</div>
+      <div class="note" style="margin-top:14px"><b>不用去折腾那串又长又难的 token</b>。Windows 上的 Git 自带凭据管理器,会自动帮你登录并把凭证存好,以后不用再输。网上很多老教程还在教手动做 token,不用管。</div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="stage-head">
+      <div class="num">5</div>
+      <h2>验证一下,然后学会日常循环</h2>
+      <span class="time">4 分钟</span>
+    </div>
+    <p class="goal">跑通一次不算会,能重复才算。</p>
+    <div class="body-in">
+      <p>刷新刚才那个 GitHub 页面,三个文件应该都躺在上面了。点开 <code>index.html</code> 还能直接看到源码。</p>
+      <p><strong>以后每次改完代码,只要三行:</strong></p>
+      <div class="cmd">
+        <button class="copy">复制</button>
+        <pre>git add .
+git commit -m "这次改了什么,一句话写清楚"
+git push</pre>
+      </div>
+      <p>改一次推一次,你的每一次改动 GitHub 都替你留着,想退回哪一版都行——这就是它比"新建副本2"强的地方。</p>
+    </div>
+  </section>
+
+  <section class="final">
+    <h2>卡住了怎么办</h2>
+    <table>
+      <tr>
+        <td>无法将"git"项识别为…</td>
+        <td>Git 没装好,或者终端是装之前开的。关掉重开。</td>
+      </tr>
+      <tr>
+        <td>remote origin already exists</td>
+        <td>之前加过了。敲 <code>git remote set-url origin 你的网址</code> 覆盖掉。</td>
+      </tr>
+      <tr>
+        <td>Authentication failed</td>
+        <td>授权窗口被你关掉了,或者登错了账号。重跑一次 push,选浏览器登录。</td>
+      </tr>
+      <tr>
+        <td>failed to push some refs / rejected</td>
+        <td>远程有本地没有的东西(多半是建仓库时勾了 README)。先 <code>git pull --rebase origin main</code>,再 push。</td>
+      </tr>
+      <tr>
+        <td>Connection timed out</td>
+        <td>网络到 GitHub 不通,换个时间或换网络再试。这是网络问题,不是你的操作问题。</td>
+      </tr>
+      <tr>
+        <td>fatal: not a git repository</td>
+        <td>没进到项目文件夹里,或者忘了 <code>git init</code>。敲 <code>cd</code> 回到 my-first-page 再看。</td>
+      </tr>
+      <tr>
+        <td>Author identity unknown</td>
+        <td>第 4 阶段的 <code>git config</code> 那两行没配。补上再 commit。</td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="final" style="margin-top:18px">
+    <h2>公开仓库里,什么能放什么不能放</h2>
+    <div class="two">
+      <div class="ok">
+        <h3>可以放</h3>
+        <ul>
+          <li>练习代码、课程项目</li>
+          <li>学习笔记、思路整理</li>
+          <li>公开课作业</li>
+        </ul>
+      </div>
+      <div class="no">
+        <h3>绝对别放</h3>
+        <ul>
+          <li>学号、身份证、手机号</li>
+          <li>宿舍楼栋、家庭住址</li>
+          <li>密码、密钥、任何 token</li>
+          <li>医院的真实病人资料</li>
+          <li>实习单位的内部文件</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--ink-2);margin-top:16px">
+      最后一条对你要格外留意:护理专业以后接触的都是真实病案数据。
+      这些数据<b>一次都不能出现在公开仓库里</b>,这是法律问题,不是习惯问题。
+    </p>
+  </section>
+
+</div>
+
+<script>
+  function legacyCopy(text, done, fail) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { fail(); }
+    document.body.removeChild(ta);
+  }
+
+  function copyText(text, done, fail) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(done)
+        .catch(function () { legacyCopy(text, done, fail); });
+    } else {
+      legacyCopy(text, done, fail);
+    }
+  }
+
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var lines = pre.innerText.split('\n').filter(function (line) {
+        return line.trim().indexOf('#') !== 0;
+      });
+      var text = lines.join('\n').trim();
+
+      function ok() {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1600);
+      }
+      function no() {
+        btn.textContent = '请手动选中';
+        setTimeout(function () { btn.textContent = '复制'; }, 2000);
+      }
+      copyText(text, ok, no);
+    });
+  });
+</script>
+</body>
+</html>
