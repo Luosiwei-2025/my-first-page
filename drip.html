@@ -78,6 +78,15 @@
   </div>
 
   <div class="field">
+    <label>病人人群</label>
+    <select id="group">
+      <option value="adult" selected>成人</option>
+      <option value="elderly">老年人 / 心肺功能不全</option>
+      <option value="child">小儿</option>
+    </select>
+  </div>
+
+  <div class="field">
     <label>滴系数（滴/ml）</label>
     <select id="factor">
       <option value="20" selected>20 — 普通输液器（成人常用）</option>
@@ -112,27 +121,40 @@
       return;
     }
 
+            if ($("group").value === "child") {
+      $("out").textContent = "—";
+      $("tip").className = "tip warn";
+      $("tip").textContent = "小儿不按滴/分计算：应按 ml/(kg·h)，用输液泵或微量泵控制，具体遵医嘱。";
+      return;
+    }
+
+
+
     const drops = volume * factor / totalMinutes;
     const shown = Math.round(drops);
 
     $("out").textContent = shown;
     $("tip").className = "tip";
 
-    if (shown > 60) {
+       const RANGES = {
+      adult:   { low: 40, high: 60, name: "成人" },
+      elderly: { low: 30, high: 40, name: "老年人" }
+    };
+    const range = RANGES[$("group").value];
+
+    if (shown > range.high) {
       $("tip").className = "tip bad";
-      $("tip").textContent = "偏快。成人常规 40–60 滴/分，超过 60 要考虑是否医嘱有误，老人、小儿、心肺功能不全者更要慢。";
-    } else if (shown < 20) {
+      $("tip").textContent = "偏快，超过" + range.name + "常规上限（" + range.low + "–" + range.high + " 滴/分）。先核对医嘱；老年人和心肺功能不全者更要注意。";
+    } else if (shown < range.low) {
       $("tip").className = "tip warn";
-      $("tip").textContent = "偏慢。低于 20 滴/分要留意是否堵管、回血，或医嘱就是要求慢滴。";
-    } else if (shown < 40) {
-      $("tip").className = "tip warn";
-      $("tip").textContent = "略低于成人常规区间（40–60 滴/分），若病人是老人或儿童属正常。";
+      $("tip").textContent = "低于" + range.name + "常规区间（" + range.low + "–" + range.high + " 滴/分）。留意是否堵管、回血，或医嘱本就要求慢滴。";
     } else {
-      $("tip").textContent = "在成人常规区间内（40–60 滴/分）。";
+      $("tip").textContent = "在" + range.name + "常规区间内（" + range.low + "–" + range.high + " 滴/分）。";
     }
+
   }
 
-  ["volume", "hour", "minute", "factor"].forEach((id) => {
+    ["volume", "hour", "minute", "factor", "group"].forEach((id) => {
     $(id).addEventListener("input", calculate);
   });
 
