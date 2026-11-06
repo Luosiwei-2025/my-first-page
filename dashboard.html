@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四维 · 驾驶舱</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: #04070c;
+    color: #cfdde2;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    padding: 0 20px 70px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px at 8% 18%, rgba(255,255,255,.55), transparent),
+      radial-gradient(1px at 22% 62%, rgba(220,240,255,.35), transparent),
+      radial-gradient(1px at 35% 12%, rgba(255,255,255,.40), transparent),
+      radial-gradient(1px at 48% 78%, rgba(220,240,255,.30), transparent),
+      radial-gradient(1px at 61% 28%, rgba(255,255,255,.45), transparent),
+      radial-gradient(1px at 74% 66%, rgba(220,240,255,.28), transparent),
+      radial-gradient(1px at 86% 22%, rgba(255,255,255,.38), transparent),
+      radial-gradient(1px at 94% 54%, rgba(220,240,255,.32), transparent),
+      radial-gradient(1px at 15% 88%, rgba(255,255,255,.30), transparent),
+      radial-gradient(1px at 55% 46%, rgba(255,255,255,.22), transparent),
+      radial-gradient(1px at 30% 40%, rgba(255,255,255,.18), transparent),
+      radial-gradient(1px at 79% 86%, rgba(255,255,255,.26), transparent);
+  }
+
+  /* ============================================================
+     背景舞台：星系钉在视口上不动，整页内容从它上面滑过去
+     ============================================================ */
+  .stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 0; pointer-events: none;
+    overflow: hidden;
+  }
+  .stage::after {
+    content: "";
+    position: absolute; inset: 0;
+    z-index: 3;
+    background:
+      radial-gradient(circle at 50% 46%, transparent 0%, rgba(4,7,12,0.40) 46%, rgba(4,7,12,0.76) 78%, rgba(4,7,12,0.90) 100%);
+  }
+
+  /* ============================================================
+     烟雾层：缭绕在星系之上、正文之下
+     6 条被拉长的雾丝，各自不同的漂移周期，永不同步
+     ============================================================ */
+  .smoke {
+    position: absolute; inset: -14%;
+    z-index: 2; pointer-events: none;
+    mix-blend-mode: screen;
+    animation: smokeDrift 88s ease-in-out infinite alternate;
+    -webkit-mask: radial-gradient(circle at 50% 47%,
+      rgba(0,0,0,.22) 0%,
+      rgba(0,0,0,.55) 22%,
+      rgba(0,0,0,.88) 46%,
+      #000 68%);
+    mask: radial-gradient(circle at 50% 47%,
+      rgba(0,0,0,.22) 0%,
+      rgba(0,0,0,.55) 22%,
+      rgba(0,0,0,.88) 46%,
+      #000 68%);
+  }
+  @keyframes smokeDrift {
+    from { transform: translate3d(-1.6%, -1.2%, 0); }
+    to   { transform: translate3d(1.6%, 1.2%, 0); }
+  }
+  .wisp { position: absolute; }
+  /* 零滤镜版：三层错位的柔光叠成一朵不规则云，只动 transform 和 opacity
+     —— 全部在合成层上跑，不重算像素，风扇不会转起来 */
+  .wisp i {
+    display: block; width: 100%; height: 100%;
+    background:
+      radial-gradient(closest-side at 34% 56%, var(--a) 0%, transparent 62%),
+      radial-gradient(closest-side at 66% 42%, var(--a) 0%, transparent 58%),
+      radial-gradient(closest-side at 50% 50%, var(--b) 0%, transparent 72%);
+    filter: blur(10px);
+    transform: translateZ(0);
+    animation: waft var(--d, 42s) ease-in-out infinite;
+    animation-delay: var(--dl, 0s);
+    will-change: transform, opacity;
+  }
+  /* 三套流速：靠热源的快，远处的慢，风向来路不同 */
+  .wisp.b i { filter: blur(16px); }
+  .wisp.c i { filter: blur(9px); }
+  .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+  @keyframes waft {
+    0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg);          opacity: .74; }
+    30%  { transform: translate3d(5%, -4%, 0) scale(1.17) rotate(2.5deg);  opacity: .96; }
+    62%  { transform: translate3d(-4.5%, 3.4%, 0) scale(.90) rotate(-3deg); opacity: .66; }
+    100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg);          opacity: .74; }
+  }
+
+  /* 胶片颗粒：烟有颗粒才像烟，纯渐变像毛玻璃 */
+  body::after {
+    content: "";
+    position: fixed; inset: 0; z-index: 900;
+    pointer-events: none;
+    opacity: .075;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  /* 星系：--s 一个变量管所有尺寸 */
+  .orbit {
+    --s: min(118vw, 1040px);
+    position: relative;
+    z-index: 1;
+    width: var(--s);
+    height: var(--s);
+    margin-top: 9vh;
+    opacity: 0.94;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  .orbit::before {
+    content: "";
+    position: absolute; inset: -16%; border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 190, 120, 0.10) 0%,
+      rgba(150, 190, 225, 0.06) 42%,
+      transparent 70%);
+    filter: blur(26px);
+  }
+
+  .trail { position: absolute; border-radius: 50%; border: 1px solid rgba(190, 220, 245, 0.06); }
+  .trail.t1 { inset: 0; }
+  .trail.t2 { inset: calc(var(--s) * 0.1447); }
+  .trail.t3 { inset: calc(var(--s) * 0.2895); }
+
+  /* 光弧：轨道上流动的光带 */
+  .arc {
+    position: absolute; border-radius: 50%;
+    -webkit-mask: radial-gradient(closest-side, transparent 97.7%, #000 98.5%, #000 99.5%, transparent 100%);
+    mask: radial-gradient(closest-side, transparent 97.7%, #000 98.5%, #000 99.5%, transparent 100%);
+  }
+  .arc.a1 {
+    inset: 0;
+    background: conic-gradient(from 200deg,
+      transparent 0deg,
+      rgba(180, 225, 252, 0) 40deg,
+      rgba(190, 230, 255, 0.55) 110deg,
+      rgba(180, 225, 252, 0) 180deg,
+      transparent 360deg);
+    animation: spin 34s linear infinite;
+  }
+  .arc.a2 {
+    inset: calc(var(--s) * 0.1447);
+    background: conic-gradient(from 320deg,
+      transparent 0deg,
+      rgba(250, 215, 235, 0) 50deg,
+      rgba(250, 220, 240, 0.46) 120deg,
+      rgba(250, 215, 235, 0) 190deg,
+      transparent 360deg);
+    animation: spin 48s linear infinite reverse;
+  }
+  .arc.a3 {
+    inset: calc(var(--s) * 0.2895);
+    background: conic-gradient(from 80deg,
+      transparent 0deg,
+      rgba(250, 240, 210, 0) 60deg,
+      rgba(250, 242, 215, 0.40) 130deg,
+      rgba(250, 240, 210, 0) 200deg,
+      transparent 360deg);
+    animation: spin 64s linear infinite;
+  }
+
+  /* ============================================================
+     太阳：中心恒星。亮核 + 日冕，光会慢慢呼吸。
+     ============================================================ */
+  .sun {
+    position: absolute; top: 50%; left: 50%;
+    width: calc(var(--s) * 0.145);
+    height: calc(var(--s) * 0.145);
+    border-radius: 50%;
+    background: radial-gradient(circle at 44% 40%,
+      #fffdf4 0%,
+      #fff3cf 20%,
+      #ffd992 42%,
+      #f7a95e 64%,
+      #c96f35 82%,
+      rgba(160, 80, 40, 0.4) 94%,
+      transparent 100%);
+    box-shadow:
+      0 0 calc(var(--s) * 0.018) rgba(255, 225, 160, 0.95),
+      0 0 calc(var(--s) * 0.055) rgba(255, 190, 110, 0.55),
+      0 0 calc(var(--s) * 0.13) rgba(255, 155, 75, 0.28),
+      0 0 calc(var(--s) * 0.24) rgba(230, 130, 60, 0.12);
+    animation: breathe 9s ease-in-out infinite;
+  }
+  /* 日冕：太阳外圈那层薄薄的雾光 */
+  .sun::after {
+    content: "";
+    position: absolute; inset: -42%; border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 205, 130, 0.20) 0%,
+      rgba(255, 180, 100, 0.07) 46%,
+      transparent 70%);
+    filter: blur(10px);
+    animation: corona 7s ease-in-out infinite;
+  }
+  .sun-label {
+    position: absolute; inset: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: calc(var(--s) * 0.019);
+    letter-spacing: calc(var(--s) * 0.008);
+    text-indent: calc(var(--s) * 0.008);
+    color: rgba(255, 250, 238, 0.96);
+    text-shadow:
+      0 0 12px rgba(130, 60, 18, 0.95),
+      0 0 3px rgba(105, 42, 10, 0.95);
+  }
+
+  /* ============================================================
+     行星：跟着轨道层转。层转到哪，行星就在哪，
+     而行星自己的亮面固定朝向层中心 —— 也就是太阳。物理上是对的。
+     ============================================================ */
+  .orbit-layer { position: absolute; inset: 0; }
+  .orbit-layer.l1 { animation: spin 26s linear infinite; }
+  .orbit-layer.l2 { animation: spin 38s linear infinite reverse; }
+  .orbit-layer.l3 { animation: spin 20s linear infinite; }
+
+  .orbit-layer::before {
+    content: "";
+    position: absolute; border-radius: 50%;
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.6px), #000 calc(100% - 1.9px), transparent 100%);
+    mask: radial-gradient(closest-side, transparent calc(100% - 2.6px), #000 calc(100% - 1.9px), transparent 100%);
+    filter: blur(0.6px);
+  }
+  .orbit-layer.l1::before {
+    inset: 0;
+    background: conic-gradient(from 340deg,
+      rgba(200, 235, 255, 0.5) 0deg,
+      rgba(200, 235, 255, 0) 20deg,
+      transparent 20deg);
+  }
+  .orbit-layer.l2::before {
+    inset: calc(var(--s) * 0.1447);
+    background: conic-gradient(from 0deg,
+      rgba(252, 225, 240, 0.45) 0deg,
+      rgba(252, 225, 240, 0) 20deg,
+      transparent 20deg);
+  }
+  .orbit-layer.l3::before {
+    inset: calc(var(--s) * 0.2895);
+    background: conic-gradient(from 340deg,
+      rgba(252, 244, 215, 0.45) 0deg,
+      rgba(252, 244, 215, 0) 20deg,
+      transparent 20deg);
+  }
+
+  .planet {
+    position: absolute; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    animation: twinkle 6s ease-in-out infinite;
+  }
+  /* 亮面在正下方 = 朝向太阳（行星都定位在轨道最顶端） */
+  .planet.blue {
+    width: calc(var(--s) * 0.021);
+    height: calc(var(--s) * 0.021);
+    background: radial-gradient(circle at 50% 88%,
+      #e4f7ff 0%,
+      #8cc8ea 28%,
+      #2e6b9e 58%,
+      #122c4a 100%);
+    box-shadow:
+      0 0 calc(var(--s) * 0.008) rgba(150, 210, 245, 0.55),
+      0 0 calc(var(--s) * 0.024) rgba(110, 180, 230, 0.22);
+  }
+  .planet.rose {
+    width: calc(var(--s) * 0.0175);
+    height: calc(var(--s) * 0.0175);
+    background: radial-gradient(circle at 50% 88%,
+      #fff0f6 0%,
+      #f2bcd4 30%,
+      #b26388 60%,
+      #55263f 100%);
+    box-shadow:
+      0 0 calc(var(--s) * 0.007) rgba(240, 185, 215, 0.5),
+      0 0 calc(var(--s) * 0.02) rgba(220, 150, 190, 0.2);
+    animation-duration: 8s;
+  }
+  .planet.gold {
+    width: calc(var(--s) * 0.0145);
+    height: calc(var(--s) * 0.0145);
+    background: radial-gradient(circle at 50% 88%,
+      #fff9e3 0%,
+      #f2da94 32%,
+      #b3904c 60%,
+      #63481e 100%);
+    box-shadow:
+      0 0 calc(var(--s) * 0.006) rgba(245, 220, 155, 0.5),
+      0 0 calc(var(--s) * 0.018) rgba(230, 195, 120, 0.2);
+    animation-duration: 4.5s;
+  }
+  .planet.p1 { top: 0; }
+  .planet.p2 { top: calc(var(--s) * 0.1447); }
+  .planet.p3 { top: calc(var(--s) * 0.2895); }
+
+  /* 行星环：给最里面那颗戴上，斜着一圈，致敬土星 */
+  .planet.ringed::after {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 240%; height: 80%;
+    transform: translate(-50%, -50%) rotate(-24deg);
+    border-radius: 50%;
+    border: 1px solid rgba(252, 240, 205, 0.55);
+    box-shadow: 0 0 10px rgba(250, 225, 160, 0.28), inset 0 0 6px rgba(250, 225, 160, 0.18);
+  }
+
+  /* ============================================================
+     内容层
+     ============================================================ */
+  .wrap { max-width: 980px; margin: 0 auto; position: relative; z-index: 1; }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 2px; border-bottom: 1px solid rgba(150, 210, 235, 0.07);
+    font-size: 11px; letter-spacing: 1.5px;
+  }
+  .logo { color: rgba(200, 240, 250, 0.72); font-weight: 400; }
+  .sys { color: rgba(150, 180, 195, 0.5); display: flex; align-items: center; gap: 7px; }
+  .sys-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #9fe8f0;
+    box-shadow: 0 0 6px 2px rgba(159, 232, 240, 0.6), 0 0 14px 5px rgba(120, 200, 230, 0.25);
+    animation: pulse 3.6s ease-in-out infinite;
+  }
+  .clock { color: rgba(150, 180, 195, 0.45); }
+
+  .hero { padding: 58px 2px 6px; }
+  .kicker {
+    font-size: 10px; letter-spacing: 4px; color: rgba(150, 185, 205, 0.5);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 44px; font-weight: 400; color: rgba(238, 249, 252, 0.96);
+    letter-spacing: 7px; line-height: 1.25;
+    text-shadow: 0 0 36px rgba(10, 20, 30, 0.9), 0 0 60px rgba(150, 220, 245, 0.22);
+  }
+  .hero .sub {
+    font-size: 13px; color: rgba(170, 200, 215, 0.6);
+    margin-top: 14px; letter-spacing: 1px;
+    text-shadow: 0 0 22px rgba(4, 7, 12, 0.95);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid rgba(150, 210, 235, 0.09); border-radius: 16px;
+    background: rgba(10, 22, 30, 0.34);
+    backdrop-filter: blur(10px);
+    margin: 46vh 0 16px; overflow: hidden;
+  }
+  .stat { padding: 15px 8px; text-align: center; border-right: 1px solid rgba(150, 210, 235, 0.06); }
+  .stat:last-child { border-right: none; }
+  .stat .num {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 22px; color: rgba(205, 245, 252, 0.85); line-height: 1.2;
+  }
+  .stat .num.amber { color: rgba(248, 236, 200, 0.82); }
+  .stat .num.coral { color: rgba(248, 210, 228, 0.8); }
+  .stat .lab { font-size: 10px; letter-spacing: 2.5px; color: rgba(150, 180, 195, 0.4); margin-top: 5px; }
+
+  .panels { display: flex; flex-direction: column; gap: 8px; }
+  details.panel {
+    background: rgba(10, 22, 30, 0.42);
+    border: 1px solid rgba(150, 210, 235, 0.09);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.45s, background 0.45s;
+  }
+  details.panel[open] {
+    border-color: rgba(170, 230, 250, 0.22);
+    background: rgba(14, 30, 40, 0.55);
+  }
+  summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 18px;
+    font-size: 13px; letter-spacing: 2px;
+    color: rgba(195, 228, 238, 0.8);
+    transition: color 0.3s;
+  }
+  summary:hover { color: rgba(228, 249, 255, 0.96); }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: "›"; margin-left: auto;
+    font-size: 20px; line-height: 1;
+    color: rgba(170, 220, 240, 0.35);
+    transition: transform 0.45s cubic-bezier(.22,.8,.30,1), color 0.3s;
+  }
+  details[open] summary::after {
+    transform: rotate(90deg);
+    color: rgba(200, 240, 252, 0.6);
+  }
+  .panel-no { font-family: Consolas, monospace; font-size: 10px; color: rgba(140, 175, 195, 0.32); }
+
+  .panel-body { overflow: hidden; }
+  .panel-inner { padding: 4px 18px 18px; }
+
+  .bar-row { margin-bottom: 12px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 12px; color: rgba(180, 205, 215, 0.72); margin-bottom: 6px; }
+  .bar { height: 5px; background: rgba(150, 210, 235, 0.08); border-radius: 3px; overflow: hidden; }
+  .bar > div {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(140, 215, 240, 0.45), rgba(200, 245, 255, 0.85));
+  }
+  .bar.y > div {
+    background: linear-gradient(90deg, rgba(220, 210, 165, 0.4), rgba(250, 242, 210, 0.8));
+  }
+
+  .todo { list-style: none; }
+  .todo li { margin-bottom: 9px; font-size: 13px; color: rgba(200, 220, 228, 0.85); display: flex; gap: 8px; align-items: flex-start; }
+  .todo input { margin-top: 3px; accent-color: #8fd8e8; }
+  .todo li.done span { text-decoration: line-through; color: rgba(140, 170, 185, 0.42); }
+
+  .log { list-style: none; }
+  .log li { font-size: 12.5px; color: rgba(180, 205, 215, 0.7); line-height: 1.9; padding-left: 15px; position: relative; }
+  .log li::before {
+    content: ""; position: absolute; left: 0; top: 10px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(190, 240, 252, 0.8);
+    box-shadow: 0 0 6px 2px rgba(150, 225, 250, 0.35);
+  }
+  .log .t { color: rgba(140, 170, 185, 0.4); margin-right: 7px; }
+
+  /* 05 · PICO 拆解 */
+  .pico { display: flex; flex-direction: column; gap: 12px; }
+  .pico-row { display: grid; grid-template-columns: 20px 1fr; gap: 11px; align-items: baseline; }
+  .pico-k {
+    font-family: Consolas, monospace; font-size: 15px; line-height: 1;
+    color: rgba(190, 240, 252, 0.72);
+    text-shadow: 0 0 10px rgba(150, 225, 250, 0.35);
+  }
+  .pico-row:nth-child(2) .pico-k { color: rgba(250, 240, 205, 0.72); text-shadow: 0 0 10px rgba(240, 225, 180, 0.3); }
+  .pico-row:nth-child(3) .pico-k { color: rgba(248, 210, 228, 0.7); text-shadow: 0 0 10px rgba(240, 190, 215, 0.3); }
+  .pico-row:nth-child(4) .pico-k { color: rgba(190, 235, 205, 0.7); text-shadow: 0 0 10px rgba(175, 230, 195, 0.3); }
+  .pico-v { font-size: 12.5px; color: rgba(205, 224, 232, 0.86); line-height: 1.6; }
+  .pico-v em {
+    font-style: normal; font-size: 9.5px; letter-spacing: 1.4px;
+    color: rgba(140, 175, 195, 0.42); margin-left: 8px;
+  }
+  .pico-hint {
+    margin-top: 14px; padding-top: 11px;
+    border-top: 1px solid rgba(150, 210, 235, 0.09);
+    font-size: 11.5px; line-height: 1.75; color: rgba(150, 180, 195, 0.5);
+  }
+
+  footer { margin-top: 26px; font-size: 11px; color: rgba(130, 160, 175, 0.38); line-height: 1.9; letter-spacing: 0.5px; }
+  a { color: rgba(190, 240, 252, 0.85); text-decoration: none; }
+  .open-btn {
+    display: inline-block; margin-top: 6px;
+    padding: 8px 16px;
+    border: 1px solid rgba(170, 230, 250, 0.28);
+    border-radius: 20px; color: rgba(205, 245, 252, 0.85); font-size: 12px;
+    transition: background 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .open-btn:hover {
+    background: rgba(170, 230, 250, 0.10);
+    box-shadow: 0 0 22px rgba(150, 220, 245, 0.25);
+  }
+
+  .statusbar {
+    display: flex; gap: 24px; justify-content: center;
+    padding: 18px 0 0; font-size: 11px;
+    color: rgba(160, 190, 205, 0.52); letter-spacing: 1.5px;
+  }
+  .statusbar span { display: flex; align-items: center; gap: 7px; }
+  .st-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .st-dot.run { background: #9fe8f0; box-shadow: 0 0 7px 2px rgba(159, 232, 240, 0.55); }
+  .st-dot.idle { background: rgba(248, 236, 200, 0.7); box-shadow: 0 0 6px 1px rgba(240, 225, 180, 0.35); }
+  .st-dot.done { background: rgba(150, 180, 195, 0.3); }
+
+  /* 转场幕布 */
+  .curtain {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 200, 130, 0.10) 0%, rgba(4, 7, 12, 0.97) 52%);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.55s ease;
+  }
+  .curtain.on { opacity: 1; pointer-events: all; }
+  .curtain-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 60px; height: 60px; margin: -30px 0 0 -30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 225, 170, 0.55);
+    opacity: 0;
+  }
+  .curtain.on .curtain-ring { animation: ripple 1.05s cubic-bezier(.2,.7,.3,1) forwards; }
+  .curtain.on .curtain-ring.d2 { animation-delay: 0.16s; border-color: rgba(170, 220, 250, 0.4); }
+  .curtain-text {
+    position: relative;
+    font-size: 12px; letter-spacing: 5px;
+    color: rgba(250, 235, 205, 0.7);
+    opacity: 0;
+    transition: opacity 0.4s ease 0.18s;
+  }
+  .curtain.on .curtain-text { opacity: 1; }
+
+  /* ============ 动画仓库 ============ */
+  @keyframes spin    { from { transform: rotate(0deg); }  to { transform: rotate(360deg); } }
+  @keyframes pulse   { 0%, 100% { opacity: 1; }  50% { opacity: 0.30; } }
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50%      { transform: translate(-50%, -50%) scale(1.03); }
+  }
+  @keyframes corona  { 0%, 100% { opacity: 0.72; }  50% { opacity: 1; } }
+  @keyframes twinkle { 0%, 100% { opacity: 1; }  50% { opacity: 0.55; } }
+  @keyframes float   { 0%, 100% { transform: translateY(0); }  50% { transform: translateY(-9px); } }
+  @keyframes ripple  {
+    from { transform: scale(0.2); opacity: 0.9; }
+    to   { transform: scale(24);  opacity: 0; }
+  }
+
+  @media (max-width: 520px) {
+    .orbit { --s: 145vw; }
+    .hero h1 { font-size: 30px; letter-spacing: 3px; }
+    .stats { margin-top: 40vh; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 背景舞台：太阳系钉在视口上，内容从它上面滑过去 -->
+  <div class="stage">
+    <div class="orbit">
+      <div class="trail t1"></div>
+      <div class="trail t2"></div>
+      <div class="trail t3"></div>
+
+      <div class="arc a1"></div>
+      <div class="arc a2"></div>
+      <div class="arc a3"></div>
+
+      <div class="sun"><span class="sun-label">四维</span></div>
+
+      <div class="orbit-layer l1"><div class="planet blue p1"></div></div>
+      <div class="orbit-layer l2"><div class="planet rose p2"></div></div>
+      <div class="orbit-layer l3"><div class="planet gold ringed p3"></div></div>
+    </div>
+
+    <!-- 烟雾：七条雾丝，三套流速，各走各的，永不整齐 -->
+    <div class="smoke">
+      <div class="wisp a" style="left:-12%; top:2%; width:74%; height:30%; transform:rotate(-13deg); --a:rgba(255,246,232,0.87); --b:rgba(248,214,168,0.38); --d:38s; --dl:-6s;"><i></i></div>
+      <div class="wisp b" style="left:14%; top:48%; width:88%; height:27%; transform:rotate(8deg); --a:rgba(214,240,255,0.87); --b:rgba(150,202,238,0.36); --d:52s; --dl:-21s;"><i></i></div>
+      <div class="wisp c" style="left:-8%; top:66%; width:62%; height:38%; transform:rotate(-5deg); --a:rgba(238,248,255,0.72); --b:rgba(180,214,242,0.32); --d:66s; --dl:-33s;"><i></i></div>
+      <div class="wisp b" style="left:48%; top:-12%; width:60%; height:28%; transform:rotate(15deg); --a:rgba(230,224,252,0.67); --b:rgba(182,172,230,0.26); --d:44s; --dl:-15s;"><i></i></div>
+      <div class="wisp a" style="left:16%; top:24%; width:66%; height:20%; transform:rotate(-21deg); --a:rgba(255,240,216,0.70); --b:rgba(250,210,168,0.29); --d:59s; --dl:-40s;"><i></i></div>
+      <div class="wisp c" style="left:-16%; top:40%; width:56%; height:32%; transform:rotate(6deg); --a:rgba(226,242,255,0.64); --b:rgba(168,206,236,0.26); --d:47s; --dl:-27s;"><i></i></div>
+      <div class="wisp a" style="left:30%; top:30%; width:56%; height:22%; transform:rotate(-8deg); --a:rgba(255,248,230,0.72); --b:rgba(250,216,176,0.28); --d:41s; --dl:-11s;"><i></i></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="topbar">
+      <span class="logo">四维 · SIWEI LAB</span>
+      <span class="sys"><span class="sys-dot"></span>SYSTEM NORMAL</span>
+      <span class="clock mono" id="clock">--:--:--</span>
+    </div>
+
+    <div class="hero">
+      <div class="kicker">01 / ORCHESTRATION · AI + NURSING</div>
+      <!-- TODO 0：大标题这句话随你改 -->
+      <h1>一切正在运转</h1>
+      <p class="sub">把每天做的事，变成看得见的进度。</p>
+    </div>
+
+    <!-- 留白给太阳系露脸：往下滚，行星还在背后绕 -->
+    <div class="stats">
+      <!-- TODO 4：这四个数字随你改 -->
+      <div class="stat"><div class="num">5</div><div class="lab">MODULES</div></div>
+      <div class="stat"><div class="num amber">2</div><div class="lab">RUNNING</div></div>
+      <div class="stat"><div class="num">5</div><div class="lab">DONE</div></div>
+      <div class="stat"><div class="num coral">128</div><div class="lab">EVENTS</div></div>
+    </div>
+
+    <div class="panels">
+
+      <details class="panel">
+        <summary><span class="panel-no">01</span><span>快捷入口</span></summary>
+        <div class="panel-body"><div class="panel-inner">
+          <p style="font-size:12.5px;color:rgba(180,205,215,0.65);line-height:1.7;">输液滴速计算器，带老年 / 小儿提示。</p>
+          <a class="open-btn" href="drip.html" data-transition>打开 →</a>
+        </div></div>
+      </details>
+
+      <details class="panel">
+        <summary><span class="panel-no">02</span><span>学习进度</span></summary>
+        <div class="panel-body"><div class="panel-inner">
+          <!-- TODO 1：三个百分比改成你的真实进度 -->
+          <div class="bar-row">
+            <div class="bar-label"><span>编程基础</span><span>30%</span></div>
+            <div class="bar"><div style="width:30%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>高等数学</span><span>20%</span></div>
+            <div class="bar y"><div style="width:20%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>护理专业课</span><span>60%</span></div>
+            <div class="bar"><div style="width:60%"></div></div>
+          </div>
+        </div></div>
+      </details>
+
+      <details class="panel">
+        <summary><span class="panel-no">03</span><span>今日待办</span></summary>
+        <div class="panel-body"><div class="panel-inner">
+          <!-- TODO 2：改成你自己的待办 -->
+          <ul class="todo" id="todo">
+            <li class="done"><input type="checkbox" checked><span>改滴速计算器标题</span></li>
+            <li><input type="checkbox"><span>高数作业</span></li>
+            <li><input type="checkbox"><span>给驾驶舱加一张新卡片</span></li>
+          </ul>
+        </div></div>
+      </details>
+
+      <details class="panel">
+        <summary><span class="panel-no">04</span><span>最近动态</span></summary>
+        <div class="panel-body"><div class="panel-inner">
+          <!-- TODO 3：改成你真实做过的事 -->
+          <ul class="log">
+            <li><span class="t">10-30</span>星系升级成太阳系：恒星 + 行星 + 行星环</li>
+            <li><span class="t">10-29</span>第一次自己改 HTML，还改出了新功能</li>
+            <li><span class="t">10-26</span>看懂了 LMI 那个网页是怎么回事</li>
+          </ul>
+        </div></div>
+      </details>
+
+      <details class="panel">
+        <summary><span class="panel-no">05</span><span>PICO 拆解</span></summary>
+        <div class="panel-body"><div class="panel-inner">
+          <!-- TODO 5：把这四行换成你自己的题目 -->
+          <div class="pico">
+            <div class="pico-row">
+              <span class="pico-k">P</span>
+              <span class="pico-v">糖尿病足溃疡患者<em>POPULATION</em></span>
+            </div>
+            <div class="pico-row">
+              <span class="pico-k">I</span>
+              <span class="pico-v">负压伤口治疗<em>INTERVENTION</em></span>
+            </div>
+            <div class="pico-row">
+              <span class="pico-k">C</span>
+              <span class="pico-v">常规湿性换药<em>COMPARISON</em></span>
+            </div>
+            <div class="pico-row">
+              <span class="pico-k">O</span>
+              <span class="pico-v">创面愈合时间、感染发生率<em>OUTCOME</em></span>
+            </div>
+          </div>
+          <p class="pico-hint">题目拆成这四块，检索式就能写出来：P 和 I 拿去当关键词，C 和 O 用来看哪篇文献真能回答你。</p>
+        </div></div>
+      </details>
+
+    </div>
+
+    <div class="statusbar">
+      <span><span class="st-dot run"></span>运行中 2</span>
+      <span><span class="st-dot idle"></span>待命 1</span>
+      <span><span class="st-dot done"></span>已完成 5</span>
+    </div>
+
+    <footer>
+      数据说明：本页所有数据来自我自己的手动记录，没有自动同步。—— 这行就是「写出处」的习惯，改数据记得改说明。
+    </footer>
+  </div>
+
+  <!-- 转场幕布 -->
+  <div class="curtain" id="curtain">
+    <div class="curtain-ring"></div>
+    <div class="curtain-ring d2"></div>
+    <div class="curtain-text">正在进入</div>
+  </div>
+
+<script>
+  function tick() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const date = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    const time = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    document.getElementById("clock").textContent = date + " " + time;
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  document.querySelectorAll("#todo input").forEach(function (box) {
+    box.addEventListener("change", function () {
+      box.parentElement.classList.toggle("done", box.checked);
+    });
+  });
+
+  // 面板展开 / 收起动画
+  document.querySelectorAll("details.panel").forEach(function (panel) {
+    const summary = panel.querySelector("summary");
+    const body = panel.querySelector(".panel-body");
+    let busy = false;
+
+    summary.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (busy) return;
+      busy = true;
+
+      if (!panel.open) {
+        body.style.height = "0px";
+        body.style.opacity = "0";
+        panel.open = true;
+        const target = body.scrollHeight;
+        requestAnimationFrame(function () {
+          body.style.transition = "height .46s cubic-bezier(.22,.8,.30,1), opacity .42s ease";
+          body.style.height = target + "px";
+          body.style.opacity = "1";
+        });
+        setTimeout(function () {
+          body.style.transition = "";
+          body.style.height = "auto";
+          body.style.opacity = "";
+          busy = false;
+        }, 480);
+      } else {
+        body.style.height = body.offsetHeight + "px";
+        body.style.opacity = "1";
+        requestAnimationFrame(function () {
+          body.style.transition = "height .36s cubic-bezier(.4,0,.7,1), opacity .3s ease";
+          body.style.height = "0px";
+          body.style.opacity = "0";
+        });
+        setTimeout(function () {
+          panel.open = false;
+          body.style.transition = "";
+          body.style.height = "";
+          body.style.opacity = "";
+          busy = false;
+        }, 380);
+      }
+    });
+  });
+
+  // 页面转场
+  document.querySelectorAll("[data-transition]").forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      const href = this.getAttribute("href");
+      const curtain = document.getElementById("curtain");
+      curtain.classList.add("on");
+      setTimeout(function () {
+        window.location.href = href;
+      }, 560);
+    });
+  });
+</script>
+</body>
+</html>

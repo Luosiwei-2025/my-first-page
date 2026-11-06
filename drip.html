@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>输液滴速计算器</title>
+<title>四维的输液计算器</title>
 <style>
   * { box-sizing: border-box; }
+  /* 从驾驶舱跳过来时，整页淡入 + 轻轻往上落一点，接住上一页的转场 */
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
   body {
     margin: 0;
     padding: 24px 16px 48px;
+    animation: pageIn 0.6s cubic-bezier(.22,.8,.30,1) both;
     background: #f4f7f7;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     color: #1f2d2b;
@@ -16,6 +22,8 @@
     justify-content: center;
   }
   .card {
+    animation: pageIn 0.75s cubic-bezier(.22,.8,.30,1) both;
+    animation-delay: 0.08s;
     width: 100%;
     max-width: 420px;
     background: #ffffff;
@@ -58,7 +66,7 @@
 </head>
 <body>
 <div class="card">
-  <h1>输液滴速计算器</h1>
+  <h1>四维的输液计算器</h1>
   <p class="sub">填三个数，出每分钟滴数。给的是参考值，实际以医嘱和病人反应为准。</p>
 
   <div class="field">
@@ -82,6 +90,7 @@
     <select id="group">
       <option value="adult" selected>成人</option>
       <option value="elderly">老年人 / 心肺功能不全</option>
+            <option value="heart">心衰病人</option>
       <option value="child">小儿</option>
     </select>
   </div>
@@ -138,7 +147,8 @@
 
        const RANGES = {
       adult:   { low: 40, high: 60, name: "成人" },
-      elderly: { low: 30, high: 40, name: "老年人" }
+            elderly: { low: 30, high: 40, name: "老年人" },
+      heart:   { low: 0,  high: 30, name: "心衰病人" }
     };
     const range = RANGES[$("group").value];
 
